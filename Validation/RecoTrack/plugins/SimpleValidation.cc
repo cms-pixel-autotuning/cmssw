@@ -43,7 +43,7 @@ private:
   std::vector<edm::InputTag> trackLabels_;
   edm::EDGetTokenT<ClusterTPAssociation> tpMap_;
 //   edm::EDGetTokenT<std::vector<PileupSummaryInfo>>  infoPileUp_;
-  std::vector<edm::EDGetTokenT<TrackCollection>> trackTokens_;
+  std::vector<edm::EDGetTokenT<edm::View<reco::Track>>> trackTokens_;
   edm::EDGetTokenT<reco::TrackToTrackingParticleAssociator> trackAssociatorToken_;
   edm::EDGetTokenT<TrackingParticleCollection> trackingParticleToken_;
 
@@ -64,7 +64,7 @@ SimpleValidation::SimpleValidation(const edm::ParameterSet& iConfig)
 {
 
   for (auto& itag : trackLabels_) {
-    trackTokens_.push_back(consumes<TrackCollection>(itag));
+    trackTokens_.push_back(consumes<edm::View<reco::Track>>(itag));
   }
 
   //now do what ever initialization is needed
@@ -101,13 +101,13 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   for (const auto& trackToken : trackTokens_) 
   {
 
-    edm::Handle<edm::View<reco::TrackCollection>> tracksHandle;
+    edm::Handle<edm::View<reco::Track>> tracksHandle;
     iEvent.getByToken(trackToken, tracksHandle);
-    const edm::View<reco::TrackCollection>& tracks = *tracksHandle;
+    const edm::View<reco::Track>& tracks = *tracksHandle;
     
     edm::RefToBaseVector<reco::Track> trackRefs;
     for (edm::View<reco::Track>::size_type i = 0; i < tracks.size(); ++i) {
-        trackRefs.push_back(tracks->refAt(i));
+        trackRefs.push_back(tracks.refAt(i));
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
