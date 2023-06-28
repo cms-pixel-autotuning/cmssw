@@ -95,7 +95,10 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 //   auto const& tp = iEvent.get(trackingParticleToken_);
 
   for (size_t i = 0, size = TPCollectionH->size(); i < size; ++i) {
-   tpCollection.push_back(TrackingParticleRef(TPCollectionH, i));
+    auto tp = TrackingParticleRef(TPCollectionH, i);
+    if (tp.charge() > 0 && tp.numberOfTrackerHits() > 0) {
+      tpCollection.push_back(tp);
+    }
   }
   
   for (const auto& trackToken : trackTokens_) 
