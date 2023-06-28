@@ -111,17 +111,33 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
-
+    int rt = 0;
+    int at = 0;
     for (const auto& track : tracks) {
-
+        rt++;
         int charge = track.charge();
         float pt = track.pt();
+        const auto& tkParam = track->parameters();
+        auto tkCov = track->covariance();
         std::cout << pt << std::endl;
+        int nSimHIts = 0;
+        std::vector<int> tpIdx;
+        std::vector<float> sharedFraction;
+        std::vector<float> tpChi2;
+        bool isSimMatched = false;
+        auto foundTPs = recSimColl.find(track);
+        if (foundTPs != recSimColl.end()) {
+          if (!foundTPs->val.empty()) {
+            at++;
+            // nSimHits = foundTPs->val[0].first->numberOfTrackerHits();
+            // isSimMatched = true;
+          }
+        }
         // //tP Matching
         // auto rangeIn = tpClust->equal_range(hits[0]->firstClusterRef());
         // auto rangeOut = tpClust->equal_range(hits[1]->firstClusterRef());
     }
-
+    LogPrint("TrackValidator") << "Associated tracks" << at << "Total reconstructed" << rt <<'\n';
   }
 
 }
