@@ -111,8 +111,10 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
+    // reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(trackRefs, tpCollection);
     int rt = 0;
     int at = 0;
+    int st = tpCollection.size();
     for (const auto& track : trackRefs) {
         rt++;
         // int charge = track.charge();
@@ -124,6 +126,7 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         // std::vector<float> tpChi2;
         // bool isSimMatched = false;
         auto foundTPs = recSimColl.find(track);
+        // auto foundOtherTPs = simRecColl.find(track);
         if (foundTPs != recSimColl.end()) {
           if (!foundTPs->val.empty()) {
             at++;
@@ -135,7 +138,7 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         // auto rangeIn = tpClust->equal_range(hits[0]->firstClusterRef());
         // auto rangeOut = tpClust->equal_range(hits[1]->firstClusterRef());
     }
-    LogPrint("TrackValidator") << "Associated tracks" << at << "Total reconstructed" << rt <<'\n';
+    LogPrint("TrackValidator") << "Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt <<'\n';
   }
 
 }
