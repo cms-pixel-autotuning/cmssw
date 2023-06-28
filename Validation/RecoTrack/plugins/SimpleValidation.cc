@@ -55,7 +55,7 @@ private:
 
 SimpleValidation::SimpleValidation(const edm::ParameterSet& iConfig)
     : trackLabels_(iConfig.getParameter<std::vector<edm::InputTag>>("trackLabels")),
-      tpMap_(consumes(iConfig.getParameter<edm::InputTag>("tpMap"))),
+      // tpMap_(consumes(iConfig.getParameter<edm::InputTag>("tpMap"))),
     //   infoPileUp_(consumes(iConfig.getParameter< edm::InputTag >("infoPileUp"))),
       trackAssociatorToken_(consumes<reco::TrackToTrackingParticleAssociator>(iConfig.getUntrackedParameter<edm::InputTag>("trackAssociator"))),
       trackingParticleToken_(consumes<TrackingParticleCollection>(iConfig.getParameter< edm::InputTag >("trackingParticles")))
@@ -101,30 +101,28 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   for (const auto& trackToken : trackTokens_) 
   {
 
-    edm::Handle<edm::View<reco::Track>> tracksHandle;
+    edm::Handle<edm::View<reco::TrackCollection>> tracksHandle;
     iEvent.getByToken(trackToken, tracksHandle);
-    const edm::View<reco::Track>& tracks = *tracksHandle;
+    const edm::View<reco::TrackCollection>& tracks = *tracksHandle;
     
     edm::RefToBaseVector<reco::Track> trackRefs;
     for (edm::View<reco::Track>::size_type i = 0; i < tracks.size(); ++i) {
-        trackRefs.push_back(tracks.refAt(i));
+        trackRefs.push_back(tracks->refAt(i));
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
     int rt = 0;
     int at = 0;
-    for (const auto& track : tracks) {
+    for (const auto& track : trackRefs) {
         rt++;
-        int charge = track.charge();
-        float pt = track.pt();
-        const auto& tkParam = track->parameters();
-        auto tkCov = track->covariance();
-        std::cout << pt << std::endl;
-        int nSimHIts = 0;
-        std::vector<int> tpIdx;
-        std::vector<float> sharedFraction;
-        std::vector<float> tpChi2;
-        bool isSimMatched = false;
+        // int charge = track.charge();
+        // float pt = track.pt();
+        // std::cout << pt << std::endl;
+        // int nSimHIts = 0;
+        // std::vector<int> tpIdx;
+        // std::vector<float> sharedFraction;
+        // std::vector<float> tpChi2;
+        // bool isSimMatched = false;
         auto foundTPs = recSimColl.find(track);
         if (foundTPs != recSimColl.end()) {
           if (!foundTPs->val.empty()) {
