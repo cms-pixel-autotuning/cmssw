@@ -65,6 +65,7 @@ SimpleValidation::SimpleValidation(const edm::ParameterSet& iConfig)
 
   for (auto& itag : trackLabels_) {
     trackTokens_.push_back(consumes<edm::View<reco::Track>>(itag));
+    // edm::LogPrint("TrackValidator") << itag.label() << "\n";
   }
 
   //now do what ever initialization is needed
@@ -96,7 +97,7 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
   for (size_t i = 0, size = TPCollectionH->size(); i < size; ++i) {
     auto tp = TrackingParticleRef(TPCollectionH, i);
-    if (tp->charge() > 0 && tp->numberOfTrackerHits() > 0) {
+    if (tp->charge() != 0 && tp->numberOfTrackerHits() > 0) {
       tpCollection.push_back(tp);
     }
   }
@@ -141,7 +142,7 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         // auto rangeIn = tpClust->equal_range(hits[0]->firstClusterRef());
         // auto rangeOut = tpClust->equal_range(hits[1]->firstClusterRef());
     }
-    LogPrint("TrackValidator") << "Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt <<'\n';
+    LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << " Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt;
   }
 
 }
