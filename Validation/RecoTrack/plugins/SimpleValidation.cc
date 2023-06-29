@@ -1,6 +1,10 @@
 // system include files
 #include <memory>
 
+#include "TTree.h"
+#include "TFile.h"
+
+
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
@@ -16,6 +20,9 @@
 #include "SimTracker/TrackerHitAssociation/interface/ClusterTPAssociation.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
+
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 //
 // class declaration
@@ -39,7 +46,11 @@ private:
   void beginJob() override;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void endJob() override;
-  
+  int global_rt_ = 0;
+  int global_at_ = 0;
+  int global_st_ = 0;
+
+  TTree* output_tree_;
   std::vector<edm::InputTag> trackLabels_;
   edm::EDGetTokenT<ClusterTPAssociation> tpMap_;
 //   edm::EDGetTokenT<std::vector<PileupSummaryInfo>>  infoPileUp_;
@@ -142,19 +153,28 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         // auto rangeIn = tpClust->equal_range(hits[0]->firstClusterRef());
         // auto rangeOut = tpClust->equal_range(hits[1]->firstClusterRef());
     }
-    LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << " Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt;
+    // LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << " Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt;
+    global_rt_ += rt;
+    global_st_ += st;
+    global_at_ += at;
   }
-
 }
 
 // ------------ method called once each job just before starting event loop  ------------
 void SimpleValidation::beginJob() {
   // please remove this method if not needed
+  edm::Service<TFileService> fs;
+  output_tree_ = fs->make<TTree>("output", "putput params");
+
+  output_tree_->Branch("rt", &global_rt_);
+  output_tree_->Branch("at", &global_at_);
+  output_tree_->Branch("st", &global_st_);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void SimpleValidation::endJob() {
   // please remove this method if not needed
+  output_tree_->Fill();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
