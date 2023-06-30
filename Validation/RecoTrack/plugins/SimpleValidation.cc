@@ -21,6 +21,8 @@
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "SimDataFormats/Associations/interface/TrackToTrackingParticleAssociator.h"
 
+#include "SimTracker/Common/interface/TrackingParticleSelector.h"
+
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
@@ -50,6 +52,7 @@ private:
   int global_at_ = 0;
   int global_st_ = 0;
 
+  TrackingParticleSelector tpSelector;
   TTree* output_tree_;
   std::vector<edm::InputTag> trackLabels_;
   edm::EDGetTokenT<ClusterTPAssociation> tpMap_;
@@ -78,7 +81,19 @@ SimpleValidation::SimpleValidation(const edm::ParameterSet& iConfig)
     trackTokens_.push_back(consumes<edm::View<reco::Track>>(itag));
     // edm::LogPrint("TrackValidator") << itag.label() << "\n";
   }
-
+  tpSelector = TrackingParticleSelector(iConfig.getParameter<double>("ptMinTP"),
+                                        iConfig.getParameter<double>("ptMaxTP"),
+                                        iConfig.getParameter<double>("minRapidityTP"),
+                                        iConfig.getParameter<double>("maxRapidityTP"),
+                                        iConfig.getParameter<double>("tipTP"),
+                                        iConfig.getParameter<double>("lipTP"),
+                                        iConfig.getParameter<int>("minHitTP"),
+                                        iConfig.getParameter<bool>("signalOnlyTP"),
+                                        iConfig.getParameter<bool>("intimeOnlyTP"),
+                                        iConfig.getParameter<bool>("chargedOnlyTP"),
+                                        iConfig.getParameter<bool>("stableOnlyTP"),
+                                        iConfig.getParameter<std::vector<int>>("pdgIdTP"),
+                                        iConfig.getParameter<bool>("invertRapidityCutTP"));
   //now do what ever initialization is needed
 }
 
@@ -108,7 +123,7 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 
   for (size_t i = 0, size = TPCollectionH->size(); i < size; ++i) {
     auto tp = TrackingParticleRef(TPCollectionH, i);
-    if (tp->charge() != 0 && tp->numberOfTrackerHits() > 0) {
+    if (tpSelector(*tp)) {
       tpCollection.push_back(tp);
     }
   }
