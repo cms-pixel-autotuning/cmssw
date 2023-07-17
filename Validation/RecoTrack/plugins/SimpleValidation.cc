@@ -51,6 +51,7 @@ private:
   int global_rt_ = 0;
   int global_at_ = 0;
   int global_st_ = 0;
+  int global_ast_ = 0;
 
   TrackingParticleSelector tpSelector;
   TTree* output_tree_;
@@ -141,13 +142,21 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
-    // reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(trackRefs, tpCollection);
+    reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(trackRefs, tpCollection);
     int rt = 0;
     int at = 0;
+    int ast = 0;
     int st = tpCollection.size();
     for (const auto& track : trackRefs) {
         rt++;
-        // int charge = track.charge();
+	auto foundTPs = recSimColl.find(track);
+        if (foundTPs != recSimColl.end()) {
+		if (!foundTPs->val.empty()) {
+			at++;
+		}
+	}
+	
+	// int charge = track.charge();
         // float pt = track.pt();
         // std::cout << pt << std::endl;
         // int nSimHIts = 0;
@@ -155,23 +164,23 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         // std::vector<float> sharedFraction;
         // std::vector<float> tpChi2;
         // bool isSimMatched = false;
-        auto foundTPs = recSimColl.find(track);
-        // auto foundOtherTPs = simRecColl.find(track);
-        if (foundTPs != recSimColl.end()) {
-          if (!foundTPs->val.empty()) {
-            at++;
-            // nSimHits = foundTPs->val[0].first->numberOfTrackerHits();
-            // isSimMatched = true;
-          }
-        }
         // //tP Matching
         // auto rangeIn = tpClust->equal_range(hits[0]->firstClusterRef());
         // auto rangeOut = tpClust->equal_range(hits[1]->firstClusterRef());
     }
+    for (const TrackingParticleRef& tp : tpCollection) {
+        auto foundTracks = simRecColl.find(tp);
+	if (foundTracks != simRecColl.end()) {
+	     ast++;									      
+	}
+    }
+
+
     // LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << " Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt;
     global_rt_ += rt;
     global_st_ += st;
     global_at_ += at;
+    global_ast_ += ast;
   }
 }
 
@@ -184,6 +193,7 @@ void SimpleValidation::beginJob() {
   output_tree_->Branch("rt", &global_rt_);
   output_tree_->Branch("at", &global_at_);
   output_tree_->Branch("st", &global_st_);
+  output_tree_->Branch("ast", &global_ast_);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
