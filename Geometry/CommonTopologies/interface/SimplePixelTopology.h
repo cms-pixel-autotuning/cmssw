@@ -324,8 +324,8 @@ namespace pixelTopology {
     using cindex_type = uint32_t;  // for cells
 
     static constexpr uint32_t maxNumberOfHits = 256 * 1024;
-    static constexpr uint32_t maxCellNeighbors = 64;
-    static constexpr uint32_t maxCellTracks = 302;
+    static constexpr uint32_t maxCellNeighbors = 128;
+    static constexpr uint32_t maxCellTracks = 604;
     static constexpr uint32_t maxHitsOnTrack = 15;
     static constexpr uint32_t maxHitsOnTrackForFullFit = 6;
     static constexpr uint32_t avgHitsPerTrack = 7;
