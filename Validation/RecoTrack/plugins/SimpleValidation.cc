@@ -27,9 +27,6 @@
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
-#include <mutex>
-
 //
 // class declaration
 //
@@ -52,7 +49,6 @@ private:
   void beginJob() override;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void endJob() override;
-  std::mutex mu;
   int global_rt_ = 0;
   int global_at_ = 0;
   int global_st_ = 0;
@@ -197,13 +193,11 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     //                             << "Total Associated (simRoReco) " << ast << "\n"
     //                             << "Total Duplicated " << dt << "\n";
     // }
-    mu.lock();
     global_rt_ += rt;
     global_st_ += st;
     global_at_ += at;
     global_dt_ += dt;
     global_ast_ += ast;
-    mu.unlock();
   }
 }
 

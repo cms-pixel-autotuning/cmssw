@@ -34,9 +34,9 @@
 #include <TF1.h>
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/PtEtaPhiMass.h"
-#include <string>
-#include <iostream>
-#include <mutex>
+// #include <string>
+// #include <iostream>
+// #include <mutex>
 
 using namespace std;
 using namespace edm;
@@ -47,12 +47,12 @@ namespace {
 
 }  // namespace
 
-int global_rt_ = 0;
-int global_at_ = 0;
-int global_st_ = 0;
-int global_dt_ = 0;
-int global_ast_ = 0;
-std::mutex mu;
+// int global_rt_ = 0;
+// int global_at_ = 0;
+// int global_st_ = 0;
+// int global_dt_ = 0;
+// int global_ast_ = 0;
+// std::mutex mu;
 
 MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset)
     : tTopoEsToken(esConsumes()),
@@ -1222,14 +1222,14 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
       //                             << "Total Fakes: " << rT - at << "\n"
       //                             << "Total Associated (simToReco): " << ast << "\n"
       //                             << "Total Duplicated: " << dt << "\n";
-        mu.lock();               
-        global_rt_ += rT;
-        global_at_ += at;
-        global_st_ += n_selTP_dr;
-        global_dt_ += dt;
-        global_ast_ += ast;
-        mu.unlock();
-      }
+      //   mu.lock();               
+      //   global_rt_ += rT;
+      //   global_at_ += at;
+      //   global_st_ += n_selTP_dr;
+      //   global_dt_ += dt;
+      //   global_ast_ += ast;
+      //   mu.unlock();
+      // }
     }  // End of  for (unsigned int www=0;www<label.size();www++){
   }    //END of for (unsigned int ww=0;ww<associators.size();ww++){
   // LogPrint("TrackValidator") << "Collection " << "pixelTracks" << "\n"
