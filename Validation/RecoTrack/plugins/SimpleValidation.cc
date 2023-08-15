@@ -1,5 +1,7 @@
 // system include files
 #include <memory>
+#include <string>
+#include <iostream>
 
 #include "TTree.h"
 #include "TFile.h"
@@ -106,6 +108,13 @@ SimpleValidation::~SimpleValidation() {
   // (e.g. close files, deallocate resources etc.)
   //
   // please remove this method altogether if it would be left empty
+  std::cerr << "pixelTracks" << "\n"
+            << "Total Simulated "<< global_st_ << "\n"
+            << "Total Reconstructed " << global_rt_ << "\n"
+            << "Total Associated (recoToSim) " << global_at_ << "\n"
+            << "Total Fakes" << global_rt_ - global_at_ << "\n"
+            << "Total Associated (simRoReco) " << global_ast_ << "\n"
+            << "Total Duplicated " << global_dt_ << "\n";
 }
 
 //
@@ -168,12 +177,19 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
     for (const TrackingParticleRef& tpr : tpCollection) {
       auto foundTrack = simRecColl.find(tpr);
-      if (foundTrack != simRecColl.end()) {
+      if (foundTrack != simRecColl.end() && !simRecColl[tpr].empty()) {
           ast++;	      
       }
     }
-
-    // LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << " Total simulated "<< st << " Associated tracks " << at << " Total reconstructed " << rt;
+    if (trackLabels_[0].label().compare("pixelTracks0") == 0) {
+      LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << "\n"
+                                << "Total Simulated "<< st << "\n"
+                                << "Total Reconstructed " << rt << "\n"
+                                << "Total Associated (recoToSim) " << at << "\n"
+                                << "Total Fakes " << rt - at << "\n"
+                                << "Total Associated (simRoReco) " << ast << "\n"
+                                << "Total Duplicated " << dt << "\n";
+    }
     global_rt_ += rt;
     global_st_ += st;
     global_at_ += at;
