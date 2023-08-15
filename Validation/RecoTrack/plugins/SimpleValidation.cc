@@ -95,7 +95,9 @@ SimpleValidation::SimpleValidation(const edm::ParameterSet& iConfig)
                                         iConfig.getParameter<bool>("chargedOnlyTP"),
                                         iConfig.getParameter<bool>("stableOnlyTP"),
                                         iConfig.getParameter<std::vector<int>>("pdgIdTP"),
-                                        iConfig.getParameter<bool>("invertRapidityCutTP"));
+                                        iConfig.getParameter<bool>("invertRapidityCutTP"),
+                                        iConfig.getParameter<double>("minPhi"),
+                                        iConfig.getParameter<double>("maxPhi"));
   //now do what ever initialization is needed
 }
 
