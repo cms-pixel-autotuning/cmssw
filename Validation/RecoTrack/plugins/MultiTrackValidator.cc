@@ -36,6 +36,7 @@
 #include "DataFormats/Math/interface/PtEtaPhiMass.h"
 #include <string>
 #include <iostream>
+#include <mutex>
 
 using namespace std;
 using namespace edm;
@@ -51,6 +52,7 @@ int global_at_ = 0;
 int global_st_ = 0;
 int global_dt_ = 0;
 int global_ast_ = 0;
+std::mutex mu;
 
 MultiTrackValidator::MultiTrackValidator(const edm::ParameterSet& pset)
     : tTopoEsToken(esConsumes()),
@@ -605,6 +607,7 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
 
   using namespace reco;
 
+
   LogDebug("TrackValidator") << "\n===================================================="
                              << "\n"
                              << "Analyzing new event"
@@ -1088,6 +1091,8 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
             isChargeMatched = false;
           if (simRecColl.find(tp[0].first) != simRecColl.end())
             numAssocRecoTracks = simRecColl[tp[0].first].size();
+          if (numAssocRecoTracks > 1)
+            dt++;
           at++;
           for (unsigned int tp_ite = 0; tp_ite < tp.size(); ++tp_ite) {
             TrackingParticle trackpart = *(tp[tp_ite].first);
@@ -1151,7 +1156,6 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
             histograms.h_assoc2_coll[ww]->Fill(www);
             if (numAssocRecoTracks > 1) {
               histograms.h_looper_coll[ww]->Fill(www);
-              dt++;
             }
             if (!isSigSimMatched) {
               histograms.h_pileup_coll[ww]->Fill(www);
@@ -1209,29 +1213,30 @@ void MultiTrackValidator::dqmAnalyze(const edm::Event& event,
             histograms.histoProducerAlgo, www, seed_fit_failed, trackCollection.size());
       }
 
-      if (label[www].label().compare("pixelTracks") == 0) {
-        LogPrint("TrackValidator") << "Collection " << label[www].label() << "\n"
-                                  << "Total Simulated (selected): " << n_selTP_dr << "\n"
-                                  << "Total Reconstructed (selected): " << n_selTrack_dr << "\n"
-                                  << "Total Reconstructed: " << rT << "\n"
-                                  << "Total Associated (recoToSim): " << at << "\n"
-                                  << "Total Fakes: " << rT - at << "\n"
-                                  << "Total Associated (simToReco): " << ast << "\n"
-                                  << "Total Duplicated: " << dt << "\n";
-                                  
+      // if (label[www].label().compare("pixelTracks") == 0) {
+      //   LogPrint("TrackValidator") << "Collection " << label[www].label() << "\n"
+      //                             << "Total Simulated (selected): " << n_selTP_dr << "\n"
+      //                             << "Total Reconstructed (selected): " << n_selTrack_dr << "\n"
+      //                             << "Total Reconstructed: " << rT << "\n"
+      //                             << "Total Associated (recoToSim): " << at << "\n"
+      //                             << "Total Fakes: " << rT - at << "\n"
+      //                             << "Total Associated (simToReco): " << ast << "\n"
+      //                             << "Total Duplicated: " << dt << "\n";
+        mu.lock();               
         global_rt_ += rT;
         global_at_ += at;
         global_st_ += n_selTP_dr;
         global_dt_ += dt;
         global_ast_ += ast;
+        mu.unlock();
       }
     }  // End of  for (unsigned int www=0;www<label.size();www++){
   }    //END of for (unsigned int ww=0;ww<associators.size();ww++){
-  LogPrint("TrackValidator") << "Collection " << "pixelTracks" << "\n"
-                          << "Total Simulated (selected): " << global_st_ << "\n"
-                          << "Total Reconstructed: " << global_rt_ << "\n"
-                          << "Total Associated (recoToSim): " << global_at_ << "\n"
-                          << "Total Fakes: " << global_rt_ - global_at_ << "\n"
-                          << "Total Associated (simToReco): " << global_ast_ << "\n"
-                          << "Total Duplicated: " << global_dt_ << "\n";
+  // LogPrint("TrackValidator") << "Collection " << "pixelTracks" << "\n"
+  //                         << "Total Simulated (selected): " << global_st_ << "\n"
+  //                         << "Total Reconstructed: " << global_rt_ << "\n"
+  //                         << "Total Associated (recoToSim): " << global_at_ << "\n"
+  //                         << "Total Fakes: " << global_rt_ - global_at_ << "\n"
+  //                         << "Total Associated (simToReco): " << global_ast_ << "\n"
+  //                         << "Total Duplicated: " << global_dt_ << "\n";
 }

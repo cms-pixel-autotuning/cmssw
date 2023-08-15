@@ -28,6 +28,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include <mutex>
+
 //
 // class declaration
 //
@@ -50,6 +52,7 @@ private:
   void beginJob() override;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
   void endJob() override;
+  std::mutex mu;
   int global_rt_ = 0;
   int global_at_ = 0;
   int global_st_ = 0;
@@ -108,13 +111,15 @@ SimpleValidation::~SimpleValidation() {
   // (e.g. close files, deallocate resources etc.)
   //
   // please remove this method altogether if it would be left empty
-  std::cerr << "pixelTracks" << "\n"
-            << "Total Simulated "<< global_st_ << "\n"
-            << "Total Reconstructed " << global_rt_ << "\n"
-            << "Total Associated (recoToSim) " << global_at_ << "\n"
-            << "Total Fakes" << global_rt_ - global_at_ << "\n"
-            << "Total Associated (simRoReco) " << global_ast_ << "\n"
-            << "Total Duplicated " << global_dt_ << "\n";
+  // if (trackLabels_[0].label().compare("pixelTracks0") == 0) {
+  //   std::cerr << "pixelTracks" << "\n"
+  //             << "Total Simulated "<< global_st_ << "\n"
+  //             << "Total Reconstructed " << global_rt_ << "\n"
+  //             << "Total Associated (recoToSim) " << global_at_ << "\n"
+  //             << "Total Fakes " << global_rt_ - global_at_ << "\n"
+  //             << "Total Associated (simRoReco) " << global_ast_ << "\n"
+  //             << "Total Duplicated " << global_dt_ << "\n";
+  // }
 }
 
 //
@@ -124,20 +129,21 @@ SimpleValidation::~SimpleValidation() {
 // ------------ method called for each event  ------------
 void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
   using namespace edm;
-   
 
 //   auto const& tpClust = iEvent.get(tpMap_);
   auto const& associatorByHits = iEvent.get(trackAssociatorToken_);
   
   TrackingParticleRefVector tpCollection;
+  TrackingParticleRefVector selectedTPCollection;
   edm::Handle<TrackingParticleCollection> TPCollectionH;
   iEvent.getByToken(trackingParticleToken_, TPCollectionH);
 //   auto const& tp = iEvent.get(trackingParticleToken_);
 
   for (size_t i = 0, size = TPCollectionH->size(); i < size; ++i) {
     auto tp = TrackingParticleRef(TPCollectionH, i);
+    tpCollection.push_back(tp);
     if (tpSelector(*tp)) {
-      tpCollection.push_back(tp);
+      selectedTPCollection.push_back(tp);
     }
   }
   
@@ -154,12 +160,13 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
 
     reco::RecoToSimCollection recSimColl = associatorByHits.associateRecoToSim(trackRefs, tpCollection);
-    reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(trackRefs, tpCollection);
+    reco::SimToRecoCollection simRecColl = associatorByHits.associateSimToReco(trackRefs, selectedTPCollection);
+
     int rt = 0;
     int at = 0;
     int ast = 0;
     int dt = 0;
-    int st = tpCollection.size();
+    int st = selectedTPCollection.size();
     for (const auto& track : trackRefs) {
       rt++;
       auto foundTP = recSimColl.find(track);
@@ -175,26 +182,28 @@ void SimpleValidation::analyze(const edm::Event& iEvent, const edm::EventSetup& 
           }
       }
     }
-    for (const TrackingParticleRef& tpr : tpCollection) {
+    for (const TrackingParticleRef& tpr : selectedTPCollection) {
       auto foundTrack = simRecColl.find(tpr);
       if (foundTrack != simRecColl.end() && !simRecColl[tpr].empty()) {
           ast++;	      
       }
     }
-    if (trackLabels_[0].label().compare("pixelTracks0") == 0) {
-      LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << "\n"
-                                << "Total Simulated "<< st << "\n"
-                                << "Total Reconstructed " << rt << "\n"
-                                << "Total Associated (recoToSim) " << at << "\n"
-                                << "Total Fakes " << rt - at << "\n"
-                                << "Total Associated (simRoReco) " << ast << "\n"
-                                << "Total Duplicated " << dt << "\n";
-    }
+    // if (trackLabels_[0].label().compare("pixelTracks0") == 0) {
+    //   LogPrint("TrackValidator") << "Tag " << trackLabels_[0].label() << "\n"
+    //                             << "Total Simulated "<< st << "\n"
+    //                             << "Total Reconstructed " << rt << "\n"
+    //                             << "Total Associated (recoToSim) " << at << "\n"
+    //                             << "Total Fakes " << rt - at << "\n"
+    //                             << "Total Associated (simRoReco) " << ast << "\n"
+    //                             << "Total Duplicated " << dt << "\n";
+    // }
+    mu.lock();
     global_rt_ += rt;
     global_st_ += st;
     global_at_ += at;
     global_dt_ += dt;
     global_ast_ += ast;
+    mu.unlock();
   }
 }
 
